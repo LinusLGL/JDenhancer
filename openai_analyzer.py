@@ -64,18 +64,6 @@ Please analyze the above job postings and create an enhanced job description tha
 
 2. **Key Responsibilities**: Extract and consolidate the main duties and responsibilities from all sources. List them as bullet points, organized by priority or theme.
 
-3. **Required Qualifications**: 
-   - Education requirements
-   - Years of experience
-   - Essential skills and competencies
-   - Professional certifications (if any)
-
-4. **Preferred Qualifications**: Additional skills or experience that would be beneficial
-
-5. **Key Competencies**: Important soft skills and attributes for success in this role
-
-6. **Work Environment & Benefits** (if mentioned): Working conditions, team structure, benefits, etc.
-
 Format the output in clear markdown with proper headings and bullet points. Make it professional, comprehensive, and easy to read. Focus on extracting accurate information from the sources rather than making assumptions.
 
 If multiple sources conflict, prioritize information from official government job portals (careers.gov.sg, mycareersfuture.gov.sg) over other sources.
