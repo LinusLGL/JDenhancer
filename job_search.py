@@ -12,31 +12,32 @@ warnings.filterwarnings('ignore', message='Unverified HTTPS request')
 
 def search_careers_gov_sg(company_name: str, job_title: str) -> List[Dict]:
     """
-    Search jobs.careers.gov.sg for job postings using Google search
+    Search jobs.careers.gov.sg for job postings using multiple methods
     """
     results = []
+    
+    # Method 1: Try Bing search
     try:
-        # Use Google to search careers.gov.sg
         search_query = f"site:careers.gov.sg {job_title} {company_name}"
         encoded_query = quote_plus(search_query)
         
-        url = f"https://www.google.com/search?q={encoded_query}&num=10"
+        url = f"https://www.bing.com/search?q={encoded_query}&count=20"
         
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
         }
         
-        response = requests.get(url, headers=headers, timeout=15)
+        response = requests.get(url, headers=headers, timeout=15, verify=False)
         
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, 'html.parser')
             
-            # Find all search result divs
-            search_results = soup.find_all('div', class_='g')
+            # Find Bing search results
+            search_results = soup.find_all('li', class_='b_algo')
             
-            for result in search_results[:5]:
+            for result in search_results[:10]:
                 try:
                     link_elem = result.find('a')
                     if not link_elem:
@@ -46,10 +47,10 @@ def search_careers_gov_sg(company_name: str, job_title: str) -> List[Dict]:
                     
                     # Check if it's a careers.gov.sg job URL
                     if 'careers.gov.sg' in job_url and '/jobs/' in job_url:
-                        title_elem = result.find('h3')
+                        title_elem = result.find('h2')
                         title = title_elem.text.strip() if title_elem else job_title
                         
-                        snippet_elem = result.find('div', class_='VwiC3b')
+                        snippet_elem = result.find('p')
                         snippet = snippet_elem.text.strip() if snippet_elem else ''
                         
                         results.append({
@@ -59,11 +60,61 @@ def search_careers_gov_sg(company_name: str, job_title: str) -> List[Dict]:
                             'source': 'jobs.careers.gov.sg',
                             'content': snippet
                         })
+                        print(f"Found careers.gov.sg job: {title}")
                 except Exception as e:
                     continue
     
     except Exception as e:
-        print(f"Error searching careers.gov.sg: {str(e)}")
+        print(f"Error searching careers.gov.sg via Bing: {str(e)}")
+    
+    # Method 2: Try DuckDuckGo if Bing didn't work
+    if not results:
+        try:
+            search_query = f"site:careers.gov.sg {job_title} {company_name}"
+            encoded_query = quote_plus(search_query)
+            
+            url = f"https://html.duckduckgo.com/html/?q={encoded_query}"
+            
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            }
+            
+            response = requests.post(url, headers=headers, timeout=15, verify=False)
+            
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.content, 'html.parser')
+                
+                # Find DuckDuckGo results
+                search_results = soup.find_all('div', class_='result')
+                
+                for result in search_results[:10]:
+                    try:
+                        link_elem = result.find('a', class_='result__a')
+                        if not link_elem:
+                            continue
+                        
+                        job_url = link_elem.get('href', '')
+                        
+                        # Check if it's a careers.gov.sg job URL
+                        if 'careers.gov.sg' in job_url and '/jobs/' in job_url:
+                            title = link_elem.text.strip() if link_elem else job_title
+                            
+                            snippet_elem = result.find('a', class_='result__snippet')
+                            snippet = snippet_elem.text.strip() if snippet_elem else ''
+                            
+                            results.append({
+                                'title': title,
+                                'company': company_name,
+                                'url': job_url,
+                                'source': 'jobs.careers.gov.sg',
+                                'content': snippet
+                            })
+                            print(f"Found careers.gov.sg job via DDG: {title}")
+                    except Exception as e:
+                        continue
+        
+        except Exception as e:
+            print(f"Error searching careers.gov.sg via DuckDuckGo: {str(e)}")
     
     return results
 
