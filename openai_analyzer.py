@@ -21,9 +21,14 @@ def extract_job_details(
     if not api_key:
         try:
             import streamlit as st
-            api_key = st.secrets["OPENAI_API_KEY"]
+            # Try new structure: [openai] api_key
+            api_key = st.secrets["openai"]["api_key"]
         except:
-            pass
+            try:
+                # Try flat structure: OPENAI_API_KEY
+                api_key = st.secrets["OPENAI_API_KEY"]
+            except:
+                pass
     
     if not api_key:
         return "Error: OpenAI API key not configured. Please set OPENAI_API_KEY in your Streamlit secrets or .env file."
@@ -116,9 +121,14 @@ def analyze_job_match(
     if not api_key:
         try:
             import streamlit as st
-            api_key = st.secrets["OPENAI_API_KEY"]
+            # Try new structure: [openai] api_key
+            api_key = st.secrets["openai"]["api_key"]
         except:
-            pass
+            try:
+                # Try flat structure: OPENAI_API_KEY
+                api_key = st.secrets["OPENAI_API_KEY"]
+            except:
+                pass
     
     if not api_key:
         return {"error": "OpenAI API key not configured"}

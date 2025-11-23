@@ -118,9 +118,14 @@ with st.sidebar:
     # Check for API key in Streamlit secrets first, then environment
     api_key = None
     try:
-        api_key = st.secrets["OPENAI_API_KEY"]
+        # Try new structure: [openai] api_key
+        api_key = st.secrets["openai"]["api_key"]
     except:
-        pass
+        try:
+            # Try flat structure: OPENAI_API_KEY
+            api_key = st.secrets["OPENAI_API_KEY"]
+        except:
+            pass
     
     if not api_key:
         api_key = os.getenv("OPENAI_API_KEY")
