@@ -13,8 +13,19 @@ warnings.filterwarnings('ignore', message='Unverified HTTPS request')
 def search_careers_gov_sg(company_name: str, job_title: str) -> List[Dict]:
     """
     Search jobs.careers.gov.sg for job postings using multiple methods
+    Note: This site is for Singapore government jobs only
     """
     results = []
+    
+    # Check if this is likely a government agency/ministry
+    gov_keywords = ['ministry', 'agency', 'authority', 'board', 'department', 'council', 
+                    'commission', 'force', 'service', 'office', 'government']
+    is_likely_gov = any(keyword in company_name.lower() for keyword in gov_keywords)
+    
+    # Skip if not a government entity (careers.gov.sg is for government jobs only)
+    if not is_likely_gov:
+        print(f"Skipping careers.gov.sg search - '{company_name}' doesn't appear to be a government entity")
+        return results
     
     # Method 1: Try Bing search
     try:
