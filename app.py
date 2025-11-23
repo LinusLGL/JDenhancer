@@ -53,16 +53,12 @@ if submitted:
                 # Search for job postings
                 search_results = search_job_postings(company_name, job_title)
                 
-                # Debug info (remove after testing)
-                st.info(f"Debug: Search completed. Found {len(search_results) if search_results else 0} results.")
-                
                 if not search_results:
-                    st.warning("❌ No job postings found. Please try different search terms.")
+                    st.info("🤖 No specific job postings found. Generating description using AI analysis...")
                 else:
                     st.success(f"✅ Found {len(search_results)} relevant job posting(s)!")
             except Exception as e:
-                st.error(f"Error during search: {str(e)}")
-                st.exception(e)
+                st.warning(f"⚠️ Search encountered an issue. Generating description using AI analysis...")
                 search_results = []
         
         if search_results:
@@ -82,30 +78,30 @@ if submitted:
                             key=f"content_{idx}",
                             disabled=True
                         )
+        
+        # Always generate AI-enhanced description (whether search results found or not)
+        st.subheader("🤖 AI-Enhanced Job Description")
+        with st.spinner("🧠 Analyzing and generating job description with AI..."):
+            enhanced_description = extract_job_details(
+                search_results,
+                company_name,
+                job_title,
+                job_description
+            )
             
-            # Analyze with OpenAI
-            st.subheader("🤖 AI-Enhanced Job Description")
-            with st.spinner("🧠 Analyzing job postings with OpenAI..."):
-                enhanced_description = extract_job_details(
-                    search_results,
-                    company_name,
-                    job_title,
-                    job_description
-                )
+            if enhanced_description:
+                st.markdown("---")
+                st.markdown(enhanced_description)
                 
-                if enhanced_description:
-                    st.markdown("---")
-                    st.markdown(enhanced_description)
-                    
-                    # Download button
-                    st.download_button(
-                        label="📥 Download Enhanced Description",
-                        data=enhanced_description,
-                        file_name=f"{company_name}_{job_title}_enhanced.txt".replace(" ", "_").replace("/", "-"),
-                        mime="text/plain"
-                    )
-                else:
-                    st.error("❌ Failed to generate enhanced description. Please try again.")
+                # Download button
+                st.download_button(
+                    label="📥 Download Enhanced Description",
+                    data=enhanced_description,
+                    file_name=f"{company_name}_{job_title}_enhanced.txt".replace(" ", "_").replace("/", "-"),
+                    mime="text/plain"
+                )
+            else:
+                st.error("❌ Failed to generate enhanced description. Please try again.")
 
 # Sidebar information
 with st.sidebar:

@@ -41,32 +41,57 @@ def extract_job_details(
     if existing_description:
         context += f"Existing Job Description:\n{existing_description}\n\n"
     
-    context += "Found Job Postings:\n\n"
-    
-    for idx, result in enumerate(search_results, 1):
-        context += f"--- Source {idx}: {result['source']} ---\n"
-        context += f"URL: {result['url']}\n"
-        context += f"Title: {result['title']}\n"
-        context += f"Company: {result['company']}\n"
-        if result.get('content'):
-            # Limit content length to avoid token limits
-            content = result['content'][:4000]
-            context += f"Content:\n{content}\n\n"
-    
-    # Create prompt for OpenAI
-    prompt = f"""You are an expert HR professional and job description writer. Based on the job postings found, create a comprehensive and enhanced job description.
+    # Check if we have search results
+    if search_results and len(search_results) > 0:
+        context += "Found Job Postings:\n\n"
+        
+        for idx, result in enumerate(search_results, 1):
+            context += f"--- Source {idx}: {result['source']} ---\n"
+            context += f"URL: {result['url']}\n"
+            context += f"Title: {result['title']}\n"
+            context += f"Company: {result['company']}\n"
+            if result.get('content'):
+                # Limit content length to avoid token limits
+                content = result['content'][:4000]
+                context += f"Content:\n{content}\n\n"
+        
+        # Create prompt for OpenAI with search results
+        prompt = f"""You are an expert HR professional and job description writer. Based on the job postings found, create a comprehensive and enhanced job description.
 
 {context}
 
 Please analyze the above job postings and create an enhanced job description that includes:
 
-1. **Job Overview**: A clear summary of the role and its importance to the organization
+1. **Job Overview**: A clear summary of the role and its importance to the organization (2-3 sentences)
 
-2. **Key Responsibilities**: Extract and consolidate the main duties and responsibilities from all sources. List them as bullet points, organized by priority or theme.
+2. **Key Responsibilities**: Extract and consolidate the main duties and responsibilities from all sources. List 5-7 of the most important responsibilities as bullet points.
 
 Format the output in clear markdown with proper headings and bullet points. Make it professional, comprehensive, and easy to read. Focus on extracting accurate information from the sources rather than making assumptions.
 
 If multiple sources conflict, prioritize information from official government job portals (careers.gov.sg, mycareersfuture.gov.sg) over other sources.
+"""
+    else:
+        # No search results found - use AI to generate based on company analysis
+        prompt = f"""You are an expert HR professional and job description writer. Based on your knowledge of the company and typical job roles, generate an accurate and professional job description.
+
+{context}
+
+Using your understanding of:
+- The company "{company_name}" (its industry, mission, and typical organizational structure)
+- The job title "{job_title}" (typical responsibilities and requirements for this role)
+- Any additional context provided
+
+Please generate a concise, accurate job description that includes:
+
+1. **Job Overview**: A clear 2-3 sentence summary of the role and its importance to the organization. Consider what this role typically involves and how it contributes to the company's goals.
+
+2. **Key Responsibilities**: List 5-7 of the most important and typical responsibilities for this role as bullet points. Base these on:
+   - Industry standards for this job title
+   - Typical functions within organizations like {company_name}
+   - The level of seniority implied by the job title
+   - Common expectations for this type of position
+
+Format the output in clear markdown with proper headings and bullet points. Keep it professional, realistic, and focused on the most critical aspects of the role. Be specific and actionable in describing responsibilities.
 """
     
     try:
