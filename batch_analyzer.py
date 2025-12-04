@@ -180,13 +180,14 @@ For each job above, generate a concise enhanced job description following this f
 For each job, output:
 **JOB [number]: [Company Name] - [Job Title]**
 
-**Enhanced Job Description**: Write a single, concise paragraph of exactly 50-60 words that combines both the job overview and key responsibilities. This should be a cohesive summary that describes the role's purpose and main duties in flowing, professional statement format.
+**Enhanced Job Description**: Write a single, concise paragraph of exactly 50-60 words that combines both the job overview and key responsibilities. Use third-person perspective (e.g., "The role involves...", "This position manages...", "Responsibilities include..."). Avoid using second-person pronouns like "you", "your" or first-person pronouns like "I", "we", "our". This should be a cohesive summary that describes the role's purpose and main duties in flowing, professional statement format.
 
 ---
 
 Important:
 - Use the found job postings as reference when available
 - If no postings found, use your knowledge of the company and role
+- Use third-person perspective only (no "you", "your", "I", "we", "our")
 - Keep each description to exactly 50-60 words
 - Make it professional and accurate
 - Separate each job with "---"

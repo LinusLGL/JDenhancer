@@ -62,7 +62,7 @@ def extract_job_details(
 
 Please analyze the above job postings and create an enhanced job description:
 
-**Enhanced Job Description**: Write a single, concise paragraph of exactly 50-60 words that combines both the job overview and key responsibilities. This should be a cohesive summary that describes the role's purpose and main duties in flowing, professional statement format. Extract the most important information from the sources and present it as a unified narrative.
+**Enhanced Job Description**: Write a single, concise paragraph of exactly 50-60 words that combines both the job overview and key responsibilities. Use third-person perspective (e.g., "The role involves...", "This position manages...", "Responsibilities include..."). Avoid using second-person pronouns like "you", "your" or first-person pronouns like "I", "we", "our". This should be a cohesive summary that describes the role's purpose and main duties in flowing, professional statement format. Extract the most important information from the sources and present it as a unified narrative.
 
 Focus on extracting accurate information from the sources rather than making assumptions. If multiple sources conflict, prioritize information from official government job portals (careers.gov.sg, mycareersfuture.gov.sg) over other sources.
 """
@@ -79,7 +79,7 @@ Using your understanding of:
 
 Please generate a concise, accurate job description:
 
-**Enhanced Job Description**: Write a single, concise paragraph of exactly 50-60 words that combines both the job overview and key responsibilities. This should be a cohesive summary that describes the role's purpose and main duties in flowing, professional statement format. Base this on:
+**Enhanced Job Description**: Write a single, concise paragraph of exactly 50-60 words that combines both the job overview and key responsibilities. Use third-person perspective (e.g., "The role involves...", "This position manages...", "Responsibilities include..."). Avoid using second-person pronouns like "you", "your" or first-person pronouns like "I", "we", "our". This should be a cohesive summary that describes the role's purpose and main duties in flowing, professional statement format. Base this on:
    - Industry standards for this job title
    - Typical functions within organizations like {company_name}
    - The level of seniority implied by the job title
