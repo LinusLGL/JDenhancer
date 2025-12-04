@@ -10,23 +10,214 @@ load_dotenv()
 
 # Page configuration
 st.set_page_config(
-    page_title="Job Description Enhancer",
-    page_icon="💼",
-    layout="wide"
+    page_title="JD Enhancer | AI-Powered Job Descriptions",
+    page_icon="🚀",
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-# Main title
-st.title("💼 Job Description Enhancer")
-st.markdown("Find and enhance job descriptions using AI-powered search and analysis")
+# Custom CSS for modern, futuristic design
+st.markdown("""
+<style>
+    /* Import modern font */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    /* Global styles */
+    * {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    /* Main container */
+    .main {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 0;
+    }
+    
+    /* Content wrapper */
+    .block-container {
+        padding: 2rem 3rem;
+        max-width: 1400px;
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 24px;
+        margin: 2rem auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Header styling */
+    h1 {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
+        font-size: 3rem !important;
+        margin-bottom: 0.5rem !important;
+        letter-spacing: -0.02em;
+    }
+    
+    /* Subtitle */
+    .subtitle {
+        color: #64748b;
+        font-size: 1.1rem;
+        font-weight: 400;
+        margin-bottom: 2rem;
+    }
+    
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background: #f8fafc;
+        padding: 8px;
+        border-radius: 16px;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 12px;
+        padding: 12px 24px;
+        font-weight: 500;
+        border: none;
+        background: transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    /* Input fields */
+    .stTextInput > div > div > input,
+    .stTextArea > div > div > textarea {
+        border-radius: 12px;
+        border: 2px solid #e2e8f0;
+        padding: 12px 16px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+    
+    .stTextInput > div > div > input:focus,
+    .stTextArea > div > div > textarea:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    /* Buttons */
+    .stButton > button {
+        border-radius: 12px;
+        padding: 12px 32px;
+        font-weight: 600;
+        font-size: 1rem;
+        border: none;
+        transition: all 0.3s ease;
+        letter-spacing: 0.02em;
+    }
+    
+    .stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+    }
+    
+    .stButton > button[kind="primary"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    }
+    
+    /* Cards/Expanders */
+    .streamlit-expanderHeader {
+        border-radius: 12px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .streamlit-expanderHeader:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+    }
+    
+    /* Success/Info/Warning boxes */
+    .stAlert {
+        border-radius: 12px;
+        border: none;
+        padding: 16px 20px;
+    }
+    
+    /* Progress bar */
+    .stProgress > div > div > div {
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        border-radius: 8px;
+    }
+    
+    /* Download button */
+    .stDownloadButton > button {
+        border-radius: 12px;
+        background: #10b981;
+        color: white;
+        font-weight: 600;
+        border: none;
+        padding: 12px 24px;
+        transition: all 0.3s ease;
+    }
+    
+    .stDownloadButton > button:hover {
+        background: #059669;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+    
+    /* Sidebar */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem 1rem;
+    }
+    
+    [data-testid="stSidebar"] * {
+        color: white !important;
+    }
+    
+    /* Form styling */
+    .stForm {
+        background: #f8fafc;
+        padding: 2rem;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    /* Spinner */
+    .stSpinner > div {
+        border-top-color: #667eea !important;
+    }
+    
+    /* Hide streamlit branding */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    
+    /* Smooth animations */
+    * {
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Hero section
+st.markdown("""
+<div style="text-align: center; margin-bottom: 3rem;">
+    <h1 style="font-size: 3.5rem; margin-bottom: 0.5rem;">🚀 JD Enhancer</h1>
+    <p class="subtitle">Transform job descriptions with AI-powered intelligence</p>
+</div>
+""", unsafe_allow_html=True)
 
 # Create tabs for single and batch analysis
-tab1, tab2 = st.tabs(["📝 Single Analysis", "📊 Batch Analysis"])
+tab1, tab2 = st.tabs(["✨ Single Analysis", "⚡ Batch Analysis"])
 
 # ============= TAB 1: SINGLE ANALYSIS =============
 with tab1:
+    st.markdown("<br>", unsafe_allow_html=True)
     # Create input form
     with st.form("job_search_form"):
-        st.subheader("Enter Job Details")
+        st.markdown("### 📋 Enter Job Details")
+        st.markdown("<p style='color: #64748b; margin-bottom: 1.5rem;'>Fill in the details below to search and enhance job descriptions</p>", unsafe_allow_html=True)
         
         company_name = st.text_input(
             "Company Name *",
@@ -47,7 +238,8 @@ with tab1:
             height=150
         )
         
-        submitted = st.form_submit_button("🔍 Search & Enhance", type="primary")
+        st.markdown("<br>", unsafe_allow_html=True)
+        submitted = st.form_submit_button("🔍 Search & Enhance", type="primary", use_container_width=True)
 
     # Process form submission
     if submitted:
@@ -96,7 +288,8 @@ with tab1:
                             )
             
             # Always generate AI-enhanced description (whether search results found or not)
-            st.subheader("🤖 AI-Enhanced Job Description")
+            st.markdown("---")
+            st.markdown("### 🤖 AI-Enhanced Job Description")
             with st.spinner("🧠 Analyzing and generating job description with AI..."):
                 enhanced_description = extract_job_details(
                     search_results,
@@ -106,8 +299,15 @@ with tab1:
                 )
                 
                 if enhanced_description:
-                    st.markdown("---")
+                    st.markdown("""
+                    <div style="background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%); 
+                                padding: 2rem; 
+                                border-radius: 16px; 
+                                border-left: 4px solid #667eea;
+                                margin: 1.5rem 0;">
+                    """, unsafe_allow_html=True)
                     st.markdown(enhanced_description)
+                    st.markdown("</div>", unsafe_allow_html=True)
                     
                     # Download button
                     st.download_button(
@@ -121,16 +321,20 @@ with tab1:
 
 # ============= TAB 2: BATCH ANALYSIS =============
 with tab2:
-    st.subheader("📊 Batch Job Description Analysis")
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("### ⚡ Batch Job Description Analysis")
     st.markdown("""
-    Process multiple jobs at once by pasting data from Excel.
-    
-    **Instructions:**
-    1. In Excel, select your data with headers: `Company Name`, `Job Title`, `Job Description`
-    2. Copy the selected cells (Ctrl+C)
-    3. Paste into the text box below (Ctrl+V)
-    4. Click "Process Batch"
-    """)
+    <div style="background: #f8fafc; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; border-left: 4px solid #667eea;">
+        <p style="color: #64748b; margin-bottom: 1rem;"><strong>Process multiple jobs at once by pasting data from Excel.</strong></p>
+        <p style="color: #64748b; margin: 0;">📌 <strong>Instructions:</strong></p>
+        <ol style="color: #64748b; margin: 0.5rem 0 0 1.2rem;">
+            <li>In Excel, select your data with headers: <code>Company Name</code>, <code>Job Title</code>, <code>Job Description</code></li>
+            <li>Copy the selected cells (Ctrl+C)</li>
+            <li>Paste into the text box below (Ctrl+V)</li>
+            <li>Click "Process Batch"</li>
+        </ol>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Example format
     with st.expander("📋 See Example Format"):
@@ -241,21 +445,23 @@ IBM	Director	""")
 
 # Sidebar information
 with st.sidebar:
-    st.header("ℹ️ About")
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("### 💡 About")
     st.markdown("""
     This application helps you enhance job descriptions by:
     
-    1. **Searching** multiple job portals:
-       - jobs.careers.gov.sg
-       - mycareersfuture.gov.sg
-       - linkedin.com
+    **🔍 Searching** multiple job portals:
+    - jobs.careers.gov.sg
+    - mycareersfuture.gov.sg
+    - linkedin.com
     
-    2. **Extracting** key information using AI
+    **🤖 Extracting** key information using AI
     
-    3. **Generating** comprehensive job descriptions
+    **✨ Generating** comprehensive job descriptions
     """)
     
-    st.header("⚙️ Setup")
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("### ⚙️ Setup")
     # Check for API key in Streamlit secrets first, then environment
     api_key = None
     try:
@@ -272,14 +478,18 @@ with st.sidebar:
         api_key = os.getenv("OPENAI_API_KEY")
     
     if api_key:
-        st.success("✅ OpenAI API Key configured")
+        st.markdown("<div style='background: rgba(16, 185, 129, 0.2); padding: 0.75rem; border-radius: 8px; margin: 0.5rem 0;'>✅ API Key Configured</div>", unsafe_allow_html=True)
     else:
-        st.error("❌ OpenAI API Key not found")
+        st.markdown("<div style='background: rgba(239, 68, 68, 0.2); padding: 0.75rem; border-radius: 8px; margin: 0.5rem 0;'>❌ API Key Not Found</div>", unsafe_allow_html=True)
         st.markdown("Set your `OPENAI_API_KEY` in Streamlit secrets or `.env` file")
     
-    st.header("📝 Example")
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("### 📝 Example")
     st.markdown("""
     **Company:** Monetary Authority of Singapore
     
     **Job Title:** Deputy/ Assistant Director, Payments Department (Contract)
     """)
+    
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; opacity: 0.6; font-size: 0.85rem;'>Made with 💜 by JD Enhancer</div>", unsafe_allow_html=True)
