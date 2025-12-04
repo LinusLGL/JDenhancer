@@ -238,6 +238,15 @@ with tab1:
             height=150
         )
         
+        # Search mode option
+        search_mode = st.radio(
+            "Search Mode",
+            options=["Quick (LinkedIn only)", "Comprehensive (All portals)"],
+            index=0,
+            horizontal=True,
+            help="Quick mode searches LinkedIn only (~5-10 sec). Comprehensive mode searches all portals in parallel (~15-20 sec)."
+        )
+        
         st.markdown("<br>", unsafe_allow_html=True)
         submitted = st.form_submit_button("🔍 Search & Enhance", type="primary", use_container_width=True)
 
@@ -246,10 +255,14 @@ with tab1:
         if not company_name or not job_title:
             st.error("⚠️ Please fill in both Company Name and Job Title fields.")
         else:
-            with st.spinner("🔎 Searching for job postings..."):
+            # Determine quick mode based on user selection
+            quick_mode = (search_mode == "Quick (LinkedIn only)")
+            search_label = "🔎 Quick search (LinkedIn)..." if quick_mode else "🔎 Comprehensive search (all portals)..."
+            
+            with st.spinner(search_label):
                 try:
-                    # Search for job postings (quick mode = LinkedIn only for speed)
-                    search_results = search_job_postings(company_name, job_title, quick_mode=True)
+                    # Search for job postings
+                    search_results = search_job_postings(company_name, job_title, quick_mode=quick_mode)
                     
                     if not search_results:
                         st.info("🤖 No specific job postings found. Generating description using AI analysis...")
@@ -257,7 +270,13 @@ with tab1:
                         with st.expander("🔍 Debug Info - Why no results?"):
                             st.text(f"Company: {company_name}")
                             st.text(f"Job Title: {job_title}")
-                            st.text("The search tried LinkedIn for job postings.")
+                            if quick_mode:
+                                st.text("The search tried LinkedIn for job postings.")
+                            else:
+                                st.text("The search tried all portals:")
+                                st.text("- jobs.careers.gov.sg")
+                                st.text("- mycareersfuture.gov.sg")
+                                st.text("- linkedin.com")
                             st.text("\nNo matching results were found. AI will generate based on general knowledge.")
                     else:
                         st.success(f"✅ Found {len(search_results)} relevant job posting(s)!")
@@ -453,14 +472,18 @@ with st.sidebar:
     st.markdown("""
     This application helps you enhance job descriptions by:
     
-    **🔍 Searching** multiple job portals:
+    **🔍 Parallel Search** across job portals:
     - jobs.careers.gov.sg
     - mycareersfuture.gov.sg
     - linkedin.com
     
-    **🤖 Extracting** key information using AI
+    **⚡ Quick Mode:** LinkedIn only (~5-10 sec)
     
-    **✨ Generating** comprehensive job descriptions
+    **📊 Comprehensive Mode:** All portals (~15-20 sec)
+    
+    **🤖 AI Enhancement** with GPT-4o-mini
+    
+    **✨ 50-60 word** concise descriptions
     """)
     
     st.markdown("<br>", unsafe_allow_html=True)

@@ -574,8 +574,11 @@ def fetch_job_details(url: str) -> str:
 def search_job_postings(company_name: str, job_title: str, quick_mode: bool = False) -> List[Dict]:
     """
     Search all job portals and aggregate results
+    Uses parallel searching for faster performance
     If quick_mode=True, only searches LinkedIn for faster results
     """
+    import concurrent.futures
+    
     all_results = []
     
     if quick_mode:
@@ -584,32 +587,46 @@ def search_job_postings(company_name: str, job_title: str, quick_mode: bool = Fa
         linkedin_results = search_linkedin(company_name, job_title)
         all_results.extend(linkedin_results)
     else:
-        # Full mode: Search all portals
-        print("Searching jobs.careers.gov.sg...")
-        careers_results = search_careers_gov_sg(company_name, job_title)
-        all_results.extend(careers_results)
+        # Full mode: Search all portals in parallel
+        print("Parallel search: careers.gov.sg, mycareersfuture, linkedin...")
         
-        time.sleep(1)  # Be polite to servers
-        
-        print("Searching mycareersfuture.gov.sg...")
-        mcf_results = search_mycareersfuture(company_name, job_title)
-        all_results.extend(mcf_results)
-        
-        time.sleep(1)
-        
-        print("Searching linkedin.com...")
-        linkedin_results = search_linkedin(company_name, job_title)
-        all_results.extend(linkedin_results)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+            # Submit all searches simultaneously
+            future_careers = executor.submit(search_careers_gov_sg, company_name, job_title)
+            future_mcf = executor.submit(search_mycareersfuture, company_name, job_title)
+            future_linkedin = executor.submit(search_linkedin, company_name, job_title)
+            
+            # Collect results as they complete
+            try:
+                careers_results = future_careers.result(timeout=30)
+                all_results.extend(careers_results)
+                print(f"✓ careers.gov.sg: {len(careers_results)} results")
+            except Exception as e:
+                print(f"✗ careers.gov.sg: {str(e)}")
+            
+            try:
+                mcf_results = future_mcf.result(timeout=30)
+                all_results.extend(mcf_results)
+                print(f"✓ mycareersfuture: {len(mcf_results)} results")
+            except Exception as e:
+                print(f"✗ mycareersfuture: {str(e)}")
+            
+            try:
+                linkedin_results = future_linkedin.result(timeout=30)
+                all_results.extend(linkedin_results)
+                print(f"✓ linkedin: {len(linkedin_results)} results")
+            except Exception as e:
+                print(f"✗ linkedin: {str(e)}")
     
     # Skip fetching full details for quick mode to save time
     if not quick_mode:
-        # Fetch full details for each result
-        for result in all_results:
+        # Fetch full details for each result (limit to first 5 for speed)
+        for result in all_results[:5]:
             if result.get('url') and not result.get('content'):
                 print(f"Fetching details from {result['url']}...")
                 full_content = fetch_job_details(result['url'])
                 if full_content:
                     result['content'] = full_content
-                time.sleep(1)
+                time.sleep(0.5)  # Reduced delay
     
     return all_results
