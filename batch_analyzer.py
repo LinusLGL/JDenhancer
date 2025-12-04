@@ -49,27 +49,69 @@ def parse_excel_paste(text: str) -> List[Dict[str, str]]:
 def process_batch_jobs_bulk(jobs_list: List[Dict[str, str]], progress_callback=None) -> List[Dict[str, any]]:
     """
     Process multiple jobs efficiently in chunks to handle unlimited rows.
-    Skips source searching for batch mode to speed up processing significantly.
-    Returns list of results with enhanced descriptions.
+    Searches for sources using optimized LinkedIn-focused approach.
+    Returns list of results with enhanced descriptions and sources.
     """
     results = []
     CHUNK_SIZE = 20  # Process 20 jobs at a time to avoid token limits
     
-    # Step 1: Skip source searching for speed - AI will generate from general knowledge
+    # Step 1: Search for sources with optimized approach (LinkedIn only for speed)
     jobs_with_sources = []
     total_jobs = len(jobs_list)
     
-    if progress_callback:
-        progress_callback(f"⚡ Preparing {total_jobs} jobs for batch processing...", 0.2)
+    import concurrent.futures
+    import time
     
-    for idx, job in enumerate(jobs_list):
-        jobs_with_sources.append({
-            'company_name': job['company_name'],
-            'job_title': job['job_title'],
-            'job_description': job.get('job_description', ''),
-            'search_results': [],  # Skip searching for batch mode
-            'sources_found': 0
-        })
+    def search_single_job(job_data):
+        """Search for a single job - optimized for speed"""
+        company_name = job_data['company_name']
+        job_title = job_data['job_title']
+        
+        try:
+            # Only search LinkedIn for speed (most reliable source)
+            from job_search import search_linkedin
+            search_results = search_linkedin(company_name, job_title)
+            time.sleep(0.5)  # Small delay to avoid overwhelming servers
+            
+            return {
+                'company_name': company_name,
+                'job_title': job_title,
+                'job_description': job_data.get('job_description', ''),
+                'search_results': search_results,
+                'sources_found': len(search_results) if search_results else 0
+            }
+        except Exception as e:
+            return {
+                'company_name': company_name,
+                'job_title': job_title,
+                'job_description': job_data.get('job_description', ''),
+                'search_results': [],
+                'sources_found': 0
+            }
+    
+    # Use ThreadPoolExecutor for parallel searching
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        futures = []
+        for idx, job in enumerate(jobs_list):
+            future = executor.submit(search_single_job, job)
+            futures.append((idx, future))
+        
+        # Collect results as they complete
+        for idx, future in futures:
+            if progress_callback:
+                progress_callback(f"🔍 Searching sources: {idx + 1}/{total_jobs} completed", 
+                                (idx + 1) / total_jobs * 0.3)
+            try:
+                result = future.result(timeout=30)  # 30 second timeout per job
+                jobs_with_sources.append(result)
+            except Exception as e:
+                jobs_with_sources.append({
+                    'company_name': jobs_list[idx]['company_name'],
+                    'job_title': jobs_list[idx]['job_title'],
+                    'job_description': jobs_list[idx].get('job_description', ''),
+                    'search_results': [],
+                    'sources_found': 0
+                })
     
     # Step 2: Get API key
     api_key = os.getenv("OPENAI_API_KEY")
@@ -104,7 +146,7 @@ def process_batch_jobs_bulk(jobs_list: List[Dict[str, str]], progress_callback=N
         
         if progress_callback:
             progress_callback(f"🤖 Processing batch {chunk_idx + 1}/{num_chunks} ({len(chunk)} jobs)...", 
-                            0.2 + (chunk_idx / num_chunks) * 0.8)  # 20-100% for AI processing
+                            0.3 + (chunk_idx / num_chunks) * 0.7)  # 30-100% for AI processing
         
         # Build context for this chunk
         context = "Process the following jobs and generate enhanced job descriptions for each:\n\n"
@@ -116,6 +158,17 @@ def process_batch_jobs_bulk(jobs_list: List[Dict[str, str]], progress_callback=N
             
             if job_data.get('job_description'):
                 context += f"Existing Description: {job_data['job_description'][:200]}\n"
+            
+            if job_data['search_results']:
+                context += f"\nFound {len(job_data['search_results'])} job posting(s):\n"
+                for src_idx, result in enumerate(job_data['search_results'][:2], 1):  # Limit to 2 sources
+                    context += f"  Source {src_idx}: {result['source']}\n"
+                    context += f"  Title: {result['title'][:100]}\n"
+                    if result.get('content'):
+                        content = result['content'][:500]
+                        context += f"  Content: {content}\n"
+            else:
+                context += "\nNo job postings found.\n"
             
             context += "\n"
         
@@ -132,11 +185,10 @@ For each job, output:
 ---
 
 Important:
-- Use your knowledge of the company's industry, mission, and typical organizational structure
-- Base descriptions on industry standards and typical responsibilities for each role
-- Consider the seniority level implied by the job title
+- Use the found job postings as reference when available
+- If no postings found, use your knowledge of the company and role
 - Keep each description to exactly 50-60 words
-- Make it professional, accurate, and specific to the role
+- Make it professional and accurate
 - Separate each job with "---"
 """
         
