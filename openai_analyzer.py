@@ -60,15 +60,11 @@ def extract_job_details(
 
 {context}
 
-Please analyze the above job postings and create an enhanced job description in statement format (paragraphs, not bullet points):
+Please analyze the above job postings and create an enhanced job description:
 
-1. **Job Overview**: A clear summary of the role and its importance to the organization (2-3 sentences)
+**Enhanced Job Description**: Write a single, concise paragraph of exactly 50-60 words that combines both the job overview and key responsibilities. This should be a cohesive summary that describes the role's purpose and main duties in flowing, professional statement format. Extract the most important information from the sources and present it as a unified narrative.
 
-2. **Key Responsibilities**: Extract and consolidate the main duties and responsibilities from all sources. Write this as a cohesive paragraph describing 5-7 of the most important responsibilities in statement format, using complete sentences that flow naturally together.
-
-Format the output in clear markdown with proper headings. Write in professional, narrative paragraph style rather than bullet points. Make it comprehensive and easy to read. Focus on extracting accurate information from the sources rather than making assumptions.
-
-If multiple sources conflict, prioritize information from official government job portals (careers.gov.sg, mycareersfuture.gov.sg) over other sources.
+Focus on extracting accurate information from the sources rather than making assumptions. If multiple sources conflict, prioritize information from official government job portals (careers.gov.sg, mycareersfuture.gov.sg) over other sources.
 """
     else:
         # No search results found - use AI to generate based on company analysis
@@ -81,17 +77,15 @@ Using your understanding of:
 - The job title "{job_title}" (typical responsibilities and requirements for this role)
 - Any additional context provided
 
-Please generate a concise, accurate job description in statement format (paragraphs, not bullet points):
+Please generate a concise, accurate job description:
 
-1. **Job Overview**: A clear 2-3 sentence summary of the role and its importance to the organization. Consider what this role typically involves and how it contributes to the company's goals.
-
-2. **Key Responsibilities**: Write a cohesive paragraph describing 5-7 of the most important and typical responsibilities for this role in statement format. Use complete sentences that flow naturally together. Base these on:
+**Enhanced Job Description**: Write a single, concise paragraph of exactly 50-60 words that combines both the job overview and key responsibilities. This should be a cohesive summary that describes the role's purpose and main duties in flowing, professional statement format. Base this on:
    - Industry standards for this job title
    - Typical functions within organizations like {company_name}
    - The level of seniority implied by the job title
    - Common expectations for this type of position
 
-Format the output in clear markdown with proper headings. Write in professional, narrative paragraph style rather than bullet points. Keep it professional, realistic, and focused on the most critical aspects of the role. Be specific and actionable in describing responsibilities.
+Keep it professional, realistic, and focused on the most critical aspects of the role. Be specific and actionable in describing responsibilities.
 """
     
     try:
