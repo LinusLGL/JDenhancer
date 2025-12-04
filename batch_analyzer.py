@@ -46,17 +46,23 @@ def parse_excel_paste(text: str) -> List[Dict[str, str]]:
     return jobs
 
 
-def process_batch_jobs_bulk(jobs_list: List[Dict[str, str]]) -> List[Dict[str, any]]:
+def process_batch_jobs_bulk(jobs_list: List[Dict[str, str]], progress_callback=None) -> List[Dict[str, any]]:
     """
-    Process multiple jobs in a single API call for efficiency.
-    First searches for sources for each job, then processes all together.
+    Process multiple jobs efficiently in chunks to handle unlimited rows.
+    First searches for sources for each job, then processes in batches of 20.
     Returns list of results with enhanced descriptions and sources.
     """
     results = []
+    CHUNK_SIZE = 20  # Process 20 jobs at a time to avoid token limits
     
     # Step 1: Search for sources for each job
     jobs_with_sources = []
-    for job in jobs_list:
+    total_jobs = len(jobs_list)
+    
+    for idx, job in enumerate(jobs_list):
+        if progress_callback:
+            progress_callback(f"🔍 Searching sources for job {idx + 1}/{total_jobs}: {job['company_name']}", 
+                            (idx + 1) / total_jobs * 0.4)  # 0-40% for searching
         try:
             search_results = search_job_postings(job['company_name'], job['job_title'])
             jobs_with_sources.append({
@@ -75,7 +81,7 @@ def process_batch_jobs_bulk(jobs_list: List[Dict[str, str]]) -> List[Dict[str, a
                 'sources_found': 0
             })
     
-    # Step 2: Prepare context for bulk processing
+    # Step 2: Get API key
     api_key = os.getenv("OPENAI_API_KEY")
     
     if not api_key:
@@ -97,33 +103,45 @@ def process_batch_jobs_bulk(jobs_list: List[Dict[str, str]]) -> List[Dict[str, a
     
     client = OpenAI(api_key=api_key)
     
-    # Build comprehensive context with all jobs and their sources
-    context = "Process the following jobs and generate enhanced job descriptions for each:\n\n"
+    # Step 3: Process jobs in chunks
+    all_results = []
+    num_chunks = (len(jobs_with_sources) + CHUNK_SIZE - 1) // CHUNK_SIZE
     
-    for idx, job_data in enumerate(jobs_with_sources, 1):
-        context += f"--- JOB {idx} ---\n"
-        context += f"Company: {job_data['company_name']}\n"
-        context += f"Job Title: {job_data['job_title']}\n"
+    for chunk_idx in range(num_chunks):
+        start_idx = chunk_idx * CHUNK_SIZE
+        end_idx = min((chunk_idx + 1) * CHUNK_SIZE, len(jobs_with_sources))
+        chunk = jobs_with_sources[start_idx:end_idx]
         
-        if job_data.get('job_description'):
-            context += f"Existing Description: {job_data['job_description']}\n"
+        if progress_callback:
+            progress_callback(f"🤖 Processing batch {chunk_idx + 1}/{num_chunks} ({len(chunk)} jobs)...", 
+                            0.4 + (chunk_idx / num_chunks) * 0.6)  # 40-100% for AI processing
         
-        if job_data['search_results']:
-            context += f"\nFound {len(job_data['search_results'])} job posting(s):\n"
-            for src_idx, result in enumerate(job_data['search_results'][:3], 1):  # Limit to 3 sources per job
-                context += f"  Source {src_idx}: {result['source']}\n"
-                context += f"  URL: {result['url']}\n"
-                context += f"  Title: {result['title']}\n"
-                if result.get('content'):
-                    content = result['content'][:1000]  # Limit content length
-                    context += f"  Content: {content}\n"
-        else:
-            context += "\nNo job postings found for this role.\n"
+        # Build context for this chunk
+        context = "Process the following jobs and generate enhanced job descriptions for each:\n\n"
         
-        context += "\n"
-    
-    # Create bulk prompt
-    prompt = f"""{context}
+        for idx, job_data in enumerate(chunk, start_idx + 1):
+            context += f"--- JOB {idx} ---\n"
+            context += f"Company: {job_data['company_name']}\n"
+            context += f"Job Title: {job_data['job_title']}\n"
+            
+            if job_data.get('job_description'):
+                context += f"Existing Description: {job_data['job_description'][:200]}\n"
+            
+            if job_data['search_results']:
+                context += f"\nFound {len(job_data['search_results'])} job posting(s):\n"
+                for src_idx, result in enumerate(job_data['search_results'][:2], 1):  # Limit to 2 sources
+                    context += f"  Source {src_idx}: {result['source']}\n"
+                    context += f"  Title: {result['title'][:100]}\n"
+                    if result.get('content'):
+                        content = result['content'][:500]  # Limit content
+                        context += f"  Content: {content}\n"
+            else:
+                context += "\nNo job postings found.\n"
+            
+            context += "\n"
+        
+        # Create chunk prompt
+        prompt = f"""{context}
 
 For each job above, generate a concise enhanced job description following this format:
 
@@ -141,80 +159,73 @@ Important:
 - Make it professional and accurate
 - Separate each job with "---"
 """
-    
-    try:
-        # Call OpenAI API once for all jobs
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are an expert HR professional who specializes in creating comprehensive job descriptions. You excel at extracting key information from multiple sources and consolidating them into clear, professional job descriptions."
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            temperature=0.7,
-            max_tokens=3000
-        )
         
-        # Parse the response
-        full_response = response.choices[0].message.content
-        
-        # Split by job separators
-        job_descriptions = full_response.split('---')
-        
-        # Match descriptions to jobs
-        for idx, job_data in enumerate(jobs_with_sources):
-            # Try to find the corresponding description
-            enhanced_desc = ""
-            for desc in job_descriptions:
-                if f"JOB {idx + 1}:" in desc or job_data['company_name'] in desc:
-                    enhanced_desc = desc.strip()
-                    break
+        try:
+            # Call OpenAI API for this chunk
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are an expert HR professional who specializes in creating comprehensive job descriptions. You excel at extracting key information from multiple sources and consolidating them into clear, professional job descriptions."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                temperature=0.7,
+                max_tokens=200 * len(chunk)  # Dynamic token allocation
+            )
             
-            if not enhanced_desc and idx < len(job_descriptions):
-                enhanced_desc = job_descriptions[idx].strip()
+            # Parse the response
+            full_response = response.choices[0].message.content
             
-            results.append({
-                'status': 'success',
-                'enhanced_description': enhanced_desc if enhanced_desc else f"**Enhanced Job Description**: Unable to generate description for this role.",
-                'sources_found': job_data['sources_found']
-            })
-        
-        # If we have fewer results than jobs, fill in the rest
-        while len(results) < len(jobs_list):
-            results.append({
-                'status': 'error',
-                'enhanced_description': 'Error: Could not parse response',
-                'sources_found': 0
-            })
-        
-    except Exception as e:
-        # Fallback to individual processing if bulk fails
-        for job_data in jobs_with_sources:
-            try:
-                enhanced_description = extract_job_details(
-                    job_data['search_results'],
-                    job_data['company_name'],
-                    job_data['job_title'],
-                    job_data['job_description']
-                )
-                results.append({
+            # Split by job separators
+            job_descriptions = full_response.split('---')
+            
+            # Match descriptions to jobs in this chunk
+            for local_idx, job_data in enumerate(chunk):
+                global_idx = start_idx + local_idx
+                # Try to find the corresponding description
+                enhanced_desc = ""
+                for desc in job_descriptions:
+                    if f"JOB {global_idx + 1}:" in desc or job_data['company_name'] in desc:
+                        enhanced_desc = desc.strip()
+                        break
+                
+                if not enhanced_desc and local_idx < len(job_descriptions):
+                    enhanced_desc = job_descriptions[local_idx].strip()
+                
+                all_results.append({
                     'status': 'success',
-                    'enhanced_description': enhanced_description,
+                    'enhanced_description': enhanced_desc if enhanced_desc else f"**Enhanced Job Description**: Unable to generate description for this role.",
                     'sources_found': job_data['sources_found']
                 })
-            except Exception as inner_e:
-                results.append({
-                    'status': 'error',
-                    'enhanced_description': f"Error: {str(inner_e)}",
-                    'sources_found': 0
-                })
+            
+        except Exception as e:
+            # Fallback to individual processing for this chunk
+            for job_data in chunk:
+                try:
+                    enhanced_description = extract_job_details(
+                        job_data['search_results'],
+                        job_data['company_name'],
+                        job_data['job_title'],
+                        job_data['job_description']
+                    )
+                    all_results.append({
+                        'status': 'success',
+                        'enhanced_description': enhanced_description,
+                        'sources_found': job_data['sources_found']
+                    })
+                except Exception as inner_e:
+                    all_results.append({
+                        'status': 'error',
+                        'enhanced_description': f"Error: {str(inner_e)}",
+                        'sources_found': 0
+                    })
     
-    return results
+    return all_results
 
 
 def process_batch_job(company_name: str, job_title: str, job_description: str = "") -> Dict[str, str]:

@@ -379,15 +379,13 @@ IBM	Director	""")
                 progress_bar = st.progress(0)
                 status_text = st.empty()
                 
-                # Step 1: Search for sources (show progress)
-                status_text.text(f"🔍 Searching for job postings across all sources...")
-                progress_bar.progress(0.3)
+                # Define progress callback
+                def update_progress(message, progress):
+                    status_text.text(message)
+                    progress_bar.progress(progress)
                 
-                # Step 2: Process all jobs in bulk
-                status_text.text(f"🤖 Processing all {len(jobs)} job(s) with AI...")
-                progress_bar.progress(0.6)
-                
-                results = process_batch_jobs_bulk(jobs)
+                # Process all jobs in bulk with progress updates
+                results = process_batch_jobs_bulk(jobs, progress_callback=update_progress)
                 
                 # Step 3: Store results
                 for idx, (job, result) in enumerate(zip(jobs, results)):
