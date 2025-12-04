@@ -413,8 +413,17 @@ IBM	Director	""")
                     with st.expander(f"{idx}. {result['company_name']} - {result['job_title']}", expanded=False):
                         st.markdown(f"**Original Description:** {result['job_description'] or 'N/A'}")
                         st.markdown(f"**Sources Found:** {result['sources_found']}")
-                        st.markdown("**Enhanced Description:**")
+                        st.markdown("---")
+                        st.markdown("### 🤖 AI-Enhanced Job Description")
+                        st.markdown("""
+                        <div style="background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%); 
+                                    padding: 2rem; 
+                                    border-radius: 16px; 
+                                    border-left: 4px solid #667eea;
+                                    margin: 1.5rem 0;">
+                        """, unsafe_allow_html=True)
                         st.markdown(result['enhanced_description'])
+                        st.markdown("</div>", unsafe_allow_html=True)
                 
                 # Create downloadable outputs
                 st.markdown("---")
