@@ -49,37 +49,27 @@ def parse_excel_paste(text: str) -> List[Dict[str, str]]:
 def process_batch_jobs_bulk(jobs_list: List[Dict[str, str]], progress_callback=None) -> List[Dict[str, any]]:
     """
     Process multiple jobs efficiently in chunks to handle unlimited rows.
-    First searches for sources for each job, then processes in batches of 20.
-    Returns list of results with enhanced descriptions and sources.
+    Skips source searching for batch mode to speed up processing significantly.
+    Returns list of results with enhanced descriptions.
     """
     results = []
     CHUNK_SIZE = 20  # Process 20 jobs at a time to avoid token limits
     
-    # Step 1: Search for sources for each job
+    # Step 1: Skip source searching for speed - AI will generate from general knowledge
     jobs_with_sources = []
     total_jobs = len(jobs_list)
     
+    if progress_callback:
+        progress_callback(f"⚡ Preparing {total_jobs} jobs for batch processing...", 0.2)
+    
     for idx, job in enumerate(jobs_list):
-        if progress_callback:
-            progress_callback(f"🔍 Searching sources for job {idx + 1}/{total_jobs}: {job['company_name']}", 
-                            (idx + 1) / total_jobs * 0.4)  # 0-40% for searching
-        try:
-            search_results = search_job_postings(job['company_name'], job['job_title'])
-            jobs_with_sources.append({
-                'company_name': job['company_name'],
-                'job_title': job['job_title'],
-                'job_description': job.get('job_description', ''),
-                'search_results': search_results,
-                'sources_found': len(search_results) if search_results else 0
-            })
-        except Exception as e:
-            jobs_with_sources.append({
-                'company_name': job['company_name'],
-                'job_title': job['job_title'],
-                'job_description': job.get('job_description', ''),
-                'search_results': [],
-                'sources_found': 0
-            })
+        jobs_with_sources.append({
+            'company_name': job['company_name'],
+            'job_title': job['job_title'],
+            'job_description': job.get('job_description', ''),
+            'search_results': [],  # Skip searching for batch mode
+            'sources_found': 0
+        })
     
     # Step 2: Get API key
     api_key = os.getenv("OPENAI_API_KEY")
@@ -114,7 +104,7 @@ def process_batch_jobs_bulk(jobs_list: List[Dict[str, str]], progress_callback=N
         
         if progress_callback:
             progress_callback(f"🤖 Processing batch {chunk_idx + 1}/{num_chunks} ({len(chunk)} jobs)...", 
-                            0.4 + (chunk_idx / num_chunks) * 0.6)  # 40-100% for AI processing
+                            0.2 + (chunk_idx / num_chunks) * 0.8)  # 20-100% for AI processing
         
         # Build context for this chunk
         context = "Process the following jobs and generate enhanced job descriptions for each:\n\n"
@@ -126,17 +116,6 @@ def process_batch_jobs_bulk(jobs_list: List[Dict[str, str]], progress_callback=N
             
             if job_data.get('job_description'):
                 context += f"Existing Description: {job_data['job_description'][:200]}\n"
-            
-            if job_data['search_results']:
-                context += f"\nFound {len(job_data['search_results'])} job posting(s):\n"
-                for src_idx, result in enumerate(job_data['search_results'][:2], 1):  # Limit to 2 sources
-                    context += f"  Source {src_idx}: {result['source']}\n"
-                    context += f"  Title: {result['title'][:100]}\n"
-                    if result.get('content'):
-                        content = result['content'][:500]  # Limit content
-                        context += f"  Content: {content}\n"
-            else:
-                context += "\nNo job postings found.\n"
             
             context += "\n"
         
@@ -153,10 +132,11 @@ For each job, output:
 ---
 
 Important:
-- Use the found job postings as reference when available
-- If no postings found, use your knowledge of the company and role
+- Use your knowledge of the company's industry, mission, and typical organizational structure
+- Base descriptions on industry standards and typical responsibilities for each role
+- Consider the seniority level implied by the job title
 - Keep each description to exactly 50-60 words
-- Make it professional and accurate
+- Make it professional, accurate, and specific to the role
 - Separate each job with "---"
 """
         
