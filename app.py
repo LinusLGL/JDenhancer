@@ -273,7 +273,7 @@ with tab1:
                 # Display search results
                 st.subheader("📋 Found Job Postings")
                 for idx, result in enumerate(search_results, 1):
-                    with st.expander(f"Result {idx}: {result['title']}", expanded=(idx == 1)):
+                    with st.expander(f"Result {idx}: {result['title']}", expanded=False):
                         st.markdown(f"**Source:** [{result['source']}]({result['url']})")
                         st.markdown(f"**Company:** {result['company']}")
                         
