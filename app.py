@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from job_search import search_job_postings
 from openai_analyzer import extract_job_details
-from batch_analyzer import parse_excel_paste, process_batch_job, format_as_excel_paste, create_downloadable_excel
+from batch_analyzer import parse_excel_paste, process_batch_job, process_batch_jobs_bulk, format_as_excel_paste, create_downloadable_excel
 
 # Load environment variables
 load_dotenv()
@@ -379,17 +379,18 @@ IBM	Director	""")
                 progress_bar = st.progress(0)
                 status_text = st.empty()
                 
-                # Process each job
-                for idx, job in enumerate(jobs):
-                    status_text.text(f"Processing {idx + 1}/{len(jobs)}: {job['company_name']} - {job['job_title']}")
-                    
-                    result = process_batch_job(
-                        job['company_name'],
-                        job['job_title'],
-                        job['job_description']
-                    )
-                    
-                    # Store result
+                # Step 1: Search for sources (show progress)
+                status_text.text(f"🔍 Searching for job postings across all sources...")
+                progress_bar.progress(0.3)
+                
+                # Step 2: Process all jobs in bulk
+                status_text.text(f"🤖 Processing all {len(jobs)} job(s) with AI...")
+                progress_bar.progress(0.6)
+                
+                results = process_batch_jobs_bulk(jobs)
+                
+                # Step 3: Store results
+                for idx, (job, result) in enumerate(zip(jobs, results)):
                     job_result = {
                         'company_name': job['company_name'],
                         'job_title': job['job_title'],
@@ -398,10 +399,8 @@ IBM	Director	""")
                         'sources_found': result['sources_found']
                     }
                     st.session_state.batch_results.append(job_result)
-                    
-                    # Update progress
-                    progress_bar.progress((idx + 1) / len(jobs))
                 
+                progress_bar.progress(1.0)
                 status_text.text(f"✅ Completed processing {len(jobs)} job(s)!")
                 
                 # Display results summary
