@@ -248,8 +248,8 @@ with tab1:
         else:
             with st.spinner("🔎 Searching for job postings..."):
                 try:
-                    # Search for job postings
-                    search_results = search_job_postings(company_name, job_title)
+                    # Search for job postings (quick mode = LinkedIn only for speed)
+                    search_results = search_job_postings(company_name, job_title, quick_mode=True)
                     
                     if not search_results:
                         st.info("🤖 No specific job postings found. Generating description using AI analysis...")
@@ -257,10 +257,7 @@ with tab1:
                         with st.expander("🔍 Debug Info - Why no results?"):
                             st.text(f"Company: {company_name}")
                             st.text(f"Job Title: {job_title}")
-                            st.text("The search tried multiple sources:")
-                            st.text("- jobs.careers.gov.sg (via DuckDuckGo, Google, Bing)")
-                            st.text("- mycareersfuture.gov.sg")
-                            st.text("- linkedin.com")
+                            st.text("The search tried LinkedIn for job postings.")
                             st.text("\nNo matching results were found. AI will generate based on general knowledge.")
                     else:
                         st.success(f"✅ Found {len(search_results)} relevant job posting(s)!")

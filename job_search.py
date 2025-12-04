@@ -571,36 +571,45 @@ def fetch_job_details(url: str) -> str:
     return ""
 
 
-def search_job_postings(company_name: str, job_title: str) -> List[Dict]:
+def search_job_postings(company_name: str, job_title: str, quick_mode: bool = False) -> List[Dict]:
     """
     Search all job portals and aggregate results
+    If quick_mode=True, only searches LinkedIn for faster results
     """
     all_results = []
     
-    # Search each portal
-    print("Searching jobs.careers.gov.sg...")
-    careers_results = search_careers_gov_sg(company_name, job_title)
-    all_results.extend(careers_results)
+    if quick_mode:
+        # Quick mode: LinkedIn only (fastest, most reliable)
+        print("Quick search: linkedin.com only...")
+        linkedin_results = search_linkedin(company_name, job_title)
+        all_results.extend(linkedin_results)
+    else:
+        # Full mode: Search all portals
+        print("Searching jobs.careers.gov.sg...")
+        careers_results = search_careers_gov_sg(company_name, job_title)
+        all_results.extend(careers_results)
+        
+        time.sleep(1)  # Be polite to servers
+        
+        print("Searching mycareersfuture.gov.sg...")
+        mcf_results = search_mycareersfuture(company_name, job_title)
+        all_results.extend(mcf_results)
+        
+        time.sleep(1)
+        
+        print("Searching linkedin.com...")
+        linkedin_results = search_linkedin(company_name, job_title)
+        all_results.extend(linkedin_results)
     
-    time.sleep(1)  # Be polite to servers
-    
-    print("Searching mycareersfuture.gov.sg...")
-    mcf_results = search_mycareersfuture(company_name, job_title)
-    all_results.extend(mcf_results)
-    
-    time.sleep(1)
-    
-    print("Searching linkedin.com...")
-    linkedin_results = search_linkedin(company_name, job_title)
-    all_results.extend(linkedin_results)
-    
-    # Fetch full details for each result
-    for result in all_results:
-        if result.get('url') and not result.get('content'):
-            print(f"Fetching details from {result['url']}...")
-            full_content = fetch_job_details(result['url'])
-            if full_content:
-                result['content'] = full_content
-            time.sleep(1)
+    # Skip fetching full details for quick mode to save time
+    if not quick_mode:
+        # Fetch full details for each result
+        for result in all_results:
+            if result.get('url') and not result.get('content'):
+                print(f"Fetching details from {result['url']}...")
+                full_content = fetch_job_details(result['url'])
+                if full_content:
+                    result['content'] = full_content
+                time.sleep(1)
     
     return all_results
